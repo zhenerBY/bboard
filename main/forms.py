@@ -2,15 +2,16 @@ from django import forms
 from django.contrib.auth import password_validation
 from django.core.exceptions import ValidationError
 from django.forms import inlineformset_factory
+from captcha.fields import CaptchaField
 
-from .models import AdvUser, Bb, AdditionalImage
+from .models import AdvUser, Bb, AdditionalImage, Comment
 from .apps import user_registered
 from .models import SubRubric, SuperRubric
 
 
 class SubRubricForm(forms.ModelForm):
     super_rubric = forms.ModelChoiceField(queryset=SuperRubric.objects.all(), empty_label=None,
-                                          label='Надрубрика', required = True)
+                                          label='Надрубрика', required=True)
 
     class Meta:
         model = SubRubric
@@ -64,7 +65,7 @@ class ChangeUserInfoForm(forms.ModelForm):
         fields = ('username', 'email', 'first_name', 'last_name', 'send_messages')
 
 
-class SearchForm (forms. Form) :
+class SearchForm(forms.Form):
     keyword = forms.CharField(required=False, max_length=20, label='')
 
 
@@ -74,4 +75,22 @@ class BbForm(forms.ModelForm):
         fields = '__all__'
         widgets = {'author': forms.HiddenInput}
 
+
 AIFormSet = inlineformset_factory(Bb, AdditionalImage, fields='__all__')
+
+
+class UserCommentForm(forms.ModelForm):
+    class Meta:
+        model = Comment
+        exclude = ('is_active',)
+        widgets = {'bb': forms.HiddenInput}
+
+
+class GuestCommentForm(forms.ModelForm):
+    captcha = CaptchaField(label='Введите текст с картинки',
+                           error_messages={'invalid': 'Неправильный текст'})
+
+    class Meta:
+        model = Comment
+        exclude = ('is_active',)
+        widgets = {'bb': forms.HiddenInput}
